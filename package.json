@@ -1,0 +1,13 @@
+{
+  "name": "ibox-cvrs-movie-booking",
+  "version": "1.0.0",
+  "description": "IBOX x CVR's movie booking system with registration, country currency and SQLite backend.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  }
+}
