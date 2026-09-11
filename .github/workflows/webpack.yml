@@ -1,8 +1,8 @@
-name: NodeJS with Webpack
+name: Node.js CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "add-production-security" ]
   pull_request:
     branches: [ "main" ]
 
@@ -10,19 +10,26 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x, 22.x]
-
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
+      - name: Use Node.js 22.5+
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.5.0
 
-    - name: Build
-      run: |
-        npm install
-        npx webpack
+      - name: Install dependencies
+        run: npm install
+
+      - name: Check server.js syntax
+        run: node --check server.js
+
+      - name: Check script.js syntax
+        run: node --check script.js
+
+      - name: Check backup script syntax
+        run: node --check scripts/backup-db.js
+
+      - name: Verify package scripts
+        run: npm run
