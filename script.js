@@ -119,7 +119,6 @@ const demoUpiId = document.getElementById("demo-upi-id");
 let paymentMethod = "qr";
 let paymentBookingInProgress = false;
 
-
 /* =========================================
    API HELPERS
 ========================================= */
@@ -167,9 +166,7 @@ async function loadCountries() {
         countrySelect.innerHTML =
             '<option value="">Select your country</option>' +
             data.countries.map(country =>
-                `<option value="${escapeAttribute(country.code)}">
-                    ${escapeHTML(country.name)}
-                </option>`
+                `<option value="${escapeAttribute(country.code)}">${escapeHTML(country.name)}</option>`
             ).join("");
     } catch (error) {
         countrySelect.innerHTML = '<option value="">Unable to load countries</option>';
@@ -261,13 +258,27 @@ async function register(event) {
     const password = registerPassword.value;
     const country = countrySelect.value;
 
-    if (name.length < 2) {
-        showAuthMessage("Name must contain at least 2 characters.");
+    if (name.length < 2 || name.length > 80) {
+        showAuthMessage("Name must contain 2-80 characters.");
         return;
     }
 
-    if (password.length < 6) {
-        showAuthMessage("Password must contain at least 6 characters.");
+    if (!validClientEmail(email)) {
+        showAuthMessage("Please enter a valid email address.");
+        return;
+    }
+
+    if (password.length < 12 || password.length > 128) {
+        showAuthMessage("Password must contain 12-128 characters.");
+        return;
+    }
+
+    const commonPasswords = new Set([
+        "password123456", "password123", "123456789012",
+        "qwertyuiop12", "admin123456", "letmein123456"
+    ]);
+    if (commonPasswords.has(password.toLowerCase())) {
+        showAuthMessage("Please choose a less common password.");
         return;
     }
 
@@ -306,6 +317,7 @@ async function logout() {
     currentUser = null;
     selectedMovie = null;
     selectedSeats = [];
+    paymentBookingInProgress = false;
     currency = { code: "USD", symbol: "$", name: "US Dollar", rate: 1 };
 
     userDisplay.textContent = "";
@@ -320,11 +332,9 @@ async function logout() {
 
 function showSection(sectionId) {
     const sections = document.querySelectorAll(".section");
-
     sections.forEach(section => section.classList.remove("active"));
 
     const target = document.getElementById(sectionId);
-
     if (target) {
         target.classList.add("active");
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -357,14 +367,10 @@ function renderMovies(movieData) {
 
             <div class="movie-content">
                 <span class="movie-category">${escapeHTML(movie.category)}</span>
-
                 <h3>${escapeHTML(movie.title)}</h3>
-
                 <div class="movie-info">
                     <span>🕐 ${escapeHTML(movie.time)}</span>
-                    <span class="movie-price">
-                        ${escapeHTML(currency.symbol)}${localPrice.toFixed(2)}
-                    </span>
+                    <span class="movie-price">${escapeHTML(currency.symbol)}${localPrice.toFixed(2)}</span>
                 </div>
             </div>
         `;
@@ -372,7 +378,7 @@ function renderMovies(movieData) {
         const poster = card.querySelector(".movie-poster");
         poster.addEventListener("error", () => {
             poster.src = "https://placehold.co/500x750/222222/ffffff?text=Movie+Poster";
-        });
+        }, { once: true });
 
         card.addEventListener("click", () => selectMovie(movie));
         movieList.appendChild(card);
@@ -397,9 +403,7 @@ function filterMovies() {
 
     const filtered = movies.filter(movie => {
         const searchMatch = movie.title.toLowerCase().includes(search);
-        const categoryMatch =
-            category === "All" || movie.category === category;
-
+        const categoryMatch = category === "All" || movie.category === category;
         return searchMatch && categoryMatch;
     });
 
@@ -417,7 +421,6 @@ function selectMovie(movie) {
     selectedMovieTitle.textContent = movie.title;
     selectedMovieTime.textContent = movie.time;
     selectedMoviePrice.textContent = convertPrice(movie.price).toFixed(2);
-
     currencySymbolSeat.textContent = currency.symbol;
 
     generateSeats();
@@ -431,12 +434,11 @@ function selectMovie(movie) {
 
 async function generateSeats() {
     seatMap.innerHTML = "";
-
     if (!selectedMovie) return;
 
     try {
         const data = await api(`/api/movies/${selectedMovie.id}/seats`);
-        const occupiedSeats = data.occupiedSeats || [];
+        const occupiedSeats = Array.isArray(data.occupiedSeats) ? data.occupiedSeats : [];
 
         for (let seatNumber = 1; seatNumber <= 32; seatNumber++) {
             const seat = document.createElement("div");
@@ -454,20 +456,18 @@ async function generateSeats() {
         }
     } catch (error) {
         console.error(error);
-        alert("Could not load seats from the server.");
+        seatMap.innerHTML = '<p class="no-movies">Unable to load seats. Please try again.</p>';
     }
 }
 
 function toggleSeat(seat) {
     if (seat.classList.contains("occupied")) return;
-
     seat.classList.toggle("selected");
     updateCalculation();
 }
 
 function updateCalculation() {
     const selected = document.querySelectorAll("#seat-map .seat.selected");
-
     selectedSeats = Array.from(selected).map(seat => Number(seat.dataset.seat));
 
     const count = selectedSeats.length;
@@ -475,7 +475,6 @@ function updateCalculation() {
 
     countDisplay.textContent = count;
     totalDisplay.textContent = convertPrice(total).toFixed(2);
-
     currencySymbolTotal.textContent = currency.symbol;
 }
 
@@ -489,6 +488,8 @@ function getSelectedLocalTotal() {
 }
 
 function openPaymentModal() {
+    if (!selectedMovie || selectedSeats.length === 0) return;
+
     const total = getSelectedLocalTotal();
     paymentTotal.textContent = Number(total).toFixed(2);
     paymentCurrencySymbol.textContent = currency.symbol;
@@ -525,13 +526,13 @@ function closePaymentModal() {
 }
 
 function setPaymentMethod(method) {
-    paymentMethod = method;
+    paymentMethod = method === "upi" ? "upi" : "qr";
     document.querySelectorAll(".payment-method").forEach(button => {
-        button.classList.toggle("active", button.dataset.method === method);
+        button.classList.toggle("active", button.dataset.method === paymentMethod);
     });
 
-    document.getElementById("qr-payment-panel").classList.toggle("hidden", method !== "qr");
-    document.getElementById("upi-payment-panel").classList.toggle("hidden", method !== "upi");
+    document.getElementById("qr-payment-panel").classList.toggle("hidden", paymentMethod !== "qr");
+    document.getElementById("upi-payment-panel").classList.toggle("hidden", paymentMethod !== "upi");
 }
 
 function simulateQrScan() {
@@ -541,6 +542,12 @@ function simulateQrScan() {
 
 async function confirmDemoPayment() {
     if (paymentBookingInProgress) return;
+
+    if (!selectedMovie || selectedSeats.length === 0) {
+        paymentMessage.textContent = "Please select a movie and at least one seat.";
+        paymentMessage.style.color = "#ffb3b3";
+        return;
+    }
 
     if (!demoPaymentCheck.checked) {
         paymentMessage.textContent = "Please confirm the demo payment checkbox.";
@@ -575,65 +582,18 @@ async function confirmDemoPayment() {
         const booking = data.booking;
 
         summaryDetails.innerHTML = `
-            <div class="summary-row">
-                <span>Booking ID</span>
-                <strong>${escapeHTML(booking.id)}</strong>
-            </div>
-
-            <div class="summary-row">
-                <span>Payment Status</span>
-                <strong>✓ ${escapeHTML(booking.paymentStatus || "PAID (DEMO)")}</strong>
-            </div>
-
-            <div class="summary-row">
-                <span>Payment Method</span>
-                <strong>${escapeHTML(booking.paymentMethod || (paymentMethod === "qr" ? "UPI QR (Demo)" : "UPI ID (Demo)"))}</strong>
-            </div>
-
-            <div class="summary-row">
-                <span>Demo Transaction ID</span>
-                <strong>${escapeHTML(booking.transactionId || ("DEMO-" + booking.id.replace("IBOX-", "")))}</strong>
-            </div>
-
-            <div class="summary-row">
-                <span>Customer</span>
-                <strong>${escapeHTML(booking.user)}</strong>
-            </div>
-
-            <div class="summary-row">
-                <span>Movie</span>
-                <strong>${escapeHTML(booking.movie)}</strong>
-            </div>
-
-            <div class="summary-row">
-                <span>Category</span>
-                <strong>${escapeHTML(booking.category)}</strong>
-            </div>
-
-            <div class="summary-row">
-                <span>Showtime</span>
-                <strong>${escapeHTML(booking.time)}</strong>
-            </div>
-
-            <div class="summary-row">
-                <span>Seats</span>
-                <strong>${booking.seats.join(", ")}</strong>
-            </div>
-
-            <div class="summary-row">
-                <span>Total Seats</span>
-                <strong>${booking.seats.length}</strong>
-            </div>
-
-            <div class="summary-row summary-total">
-                <span>Total Paid</span>
-                <strong>${escapeHTML(booking.currencySymbol)}${Number(booking.totalPaid).toFixed(2)} ${escapeHTML(booking.currencyCode)}</strong>
-            </div>
-
-            <div class="summary-row">
-                <span>Booking Date</span>
-                <strong>${escapeHTML(booking.date)}</strong>
-            </div>
+            <div class="summary-row"><span>Booking ID</span><strong>${escapeHTML(booking.id)}</strong></div>
+            <div class="summary-row"><span>Payment Status</span><strong>✓ ${escapeHTML(booking.paymentStatus || "PAID (DEMO)")}</strong></div>
+            <div class="summary-row"><span>Payment Method</span><strong>${escapeHTML(booking.paymentMethod || (paymentMethod === "qr" ? "UPI QR (Demo)" : "UPI ID (Demo)"))}</strong></div>
+            <div class="summary-row"><span>Demo Transaction ID</span><strong>${escapeHTML(booking.transactionId || ("DEMO-" + booking.id.replace("IBOX-", "")))}</strong></div>
+            <div class="summary-row"><span>Customer</span><strong>${escapeHTML(booking.user)}</strong></div>
+            <div class="summary-row"><span>Movie</span><strong>${escapeHTML(booking.movie)}</strong></div>
+            <div class="summary-row"><span>Category</span><strong>${escapeHTML(booking.category)}</strong></div>
+            <div class="summary-row"><span>Showtime</span><strong>${escapeHTML(booking.time)}</strong></div>
+            <div class="summary-row"><span>Seats</span><strong>${booking.seats.map(escapeHTML).join(", ")}</strong></div>
+            <div class="summary-row"><span>Total Seats</span><strong>${Number(booking.seats.length)}</strong></div>
+            <div class="summary-row summary-total"><span>Total Paid</span><strong>${escapeHTML(booking.currencySymbol)}${Number(booking.totalPaid).toFixed(2)} ${escapeHTML(booking.currencyCode)}</strong></div>
+            <div class="summary-row"><span>Booking Date</span><strong>${escapeHTML(booking.date)}</strong></div>
         `;
 
         paymentModal.classList.remove("active");
@@ -652,6 +612,12 @@ async function confirmDemoPayment() {
 }
 
 async function bookTickets() {
+    if (!currentUser) {
+        showSection("login-section");
+        showAuthMessage("Please login before booking.");
+        return;
+    }
+
     if (!selectedMovie) {
         alert("Please select a movie.");
         return;
@@ -697,6 +663,10 @@ function escapeAttribute(text) {
         .replace(/>/g, "&gt;");
 }
 
+function validClientEmail(email) {
+    return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 /* =========================================
    INITIALIZE
 ========================================= */
@@ -708,7 +678,6 @@ async function initializeApp() {
 
     try {
         const data = await api("/api/auth/me");
-
         if (data.user) {
             currentUser = data.user;
             userDisplay.textContent = currentUser.name;
@@ -727,22 +696,17 @@ async function initializeApp() {
 
 loginTab.addEventListener("click", () => setAuthMode("login"));
 registerTab.addEventListener("click", () => setAuthMode("register"));
-
 loginForm.addEventListener("submit", login);
 registerForm.addEventListener("submit", register);
 countrySelect.addEventListener("change", updateCurrencyPreview);
-
 document.getElementById("book-btn").addEventListener("click", bookTickets);
-
 document.querySelectorAll(".payment-method").forEach(button => {
     button.addEventListener("click", () => setPaymentMethod(button.dataset.method));
 });
-
 document.getElementById("fake-scan-btn").addEventListener("click", simulateQrScan);
 document.getElementById("confirm-payment-btn").addEventListener("click", confirmDemoPayment);
 document.getElementById("close-payment").addEventListener("click", closePaymentModal);
 document.getElementById("payment-backdrop").addEventListener("click", closePaymentModal);
-
 document.getElementById("copy-upi-btn").addEventListener("click", async () => {
     try {
         await navigator.clipboard.writeText(demoUpiId.value);
@@ -753,20 +717,15 @@ document.getElementById("copy-upi-btn").addEventListener("click", async () => {
         document.getElementById("upi-copy-status").textContent = "✓ Demo UPI ID copied.";
     }
 });
-
 document.getElementById("print-receipt-btn").addEventListener("click", () => window.print());
-
 document.getElementById("back-btn").addEventListener("click", () => {
     selectedMovie = null;
     selectedSeats = [];
     showSection("movie-section");
 });
-
 document.getElementById("another-ticket-btn").addEventListener("click", resetApp);
 document.getElementById("logout-btn").addEventListener("click", logout);
 document.getElementById("summary-logout-btn").addEventListener("click", logout);
-
 searchBar.addEventListener("input", filterMovies);
 categoryFilter.addEventListener("change", filterMovies);
-
 document.addEventListener("DOMContentLoaded", initializeApp);
