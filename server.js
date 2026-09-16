@@ -403,8 +403,8 @@ async function handler(req, res) {
                 db.prepare(`INSERT INTO bookings(id,user_id,movie_id,seats_json,total_usd,currency_code,total_local,payment_method,payment_status,transaction_id,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)`).run(bookingId,user.id,movieId,JSON.stringify(seats),totalUsd,currencyRow.code,totalLocal,paymentMethod,paymentStatus,transactionId,new Date().toISOString());
                 const updateSeat = db.prepare(`UPDATE seats SET user_id=?,booking_id=?,booked_at=? WHERE movie_id=? AND seat_number=? AND booking_id IS NULL`);
                 const bookedAt = new Date().toISOString();
-                seats.forEach(seat => updateSeat.run(user.id,bookingId,bookedAt,movieId,seat));
-                const updatedCount = seats.reduce((count, seat) => count + Number(updateSeat.changes || 0), 0);
+                const updateResults = seats.map(seat => updateSeat.run(user.id,bookingId,bookedAt,movieId,seat));
+                const updatedCount = updateResults.reduce((count, result) => count + (Number(result.changes) === 1 ? 1 : 0), 0);
                 if (updatedCount !== seats.length) {
                     db.exec("ROLLBACK");
                     return json(res,409,{message:"One or more selected seats became unavailable. Please choose again."});
