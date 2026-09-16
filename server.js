@@ -21,6 +21,7 @@ const AUTH_RATE_MAX = Number(process.env.AUTH_RATE_LIMIT_MAX || 10);
 const REGISTER_RATE_MAX = Number(process.env.REGISTER_RATE_LIMIT_MAX || 5);
 const BOOKING_RATE_MAX = Number(process.env.BOOKING_RATE_LIMIT_MAX || 20);
 
+if (!Number.isInteger(PORT) || PORT < 1 || PORT > 65535) throw new Error("PORT must be an integer between 1 and 65535.");
 if (IS_PRODUCTION && !SESSION_SECRET) throw new Error("SESSION_SECRET is required in production.");
 if (IS_PRODUCTION && SESSION_SECRET.length < 32) throw new Error("SESSION_SECRET must be at least 32 characters in production.");
 if (IS_PRODUCTION && !PUBLIC_ORIGIN) throw new Error("PUBLIC_ORIGIN is required in production, e.g. https://your-domain.com");
@@ -209,7 +210,6 @@ function setCookie(res, name, value, options = {}) {
     const values = existing ? (Array.isArray(existing) ? existing : [existing]) : [];
     res.setHeader("Set-Cookie", [...values, cookie]);
 }
-function sha256(value) { return crypto.createHash("sha256").update(value).digest("hex"); }
 function hashPassword(password, salt) { return crypto.scryptSync(password, salt, 64, { N: 131072, r: 8, p: 1 }).toString("hex"); }
 function sessionHash(token) { return crypto.createHmac("sha256", SESSION_SECRET).update(token).digest("hex"); }
 function createSession(userId) {
@@ -217,6 +217,9 @@ function createSession(userId) {
     const expires = Date.now() + SESSION_TTL_MS;
     db.prepare(`INSERT INTO sessions(token_hash,user_id,expires_at) VALUES(?,?,?)`).run(sessionHash(token), userId, expires);
     return token;
+}
+function createBookingId(prefix) {
+    return `${prefix}-${crypto.randomBytes(8).toString("hex").toUpperCase()}`;
 }
 function getUser(req) {
     const token = parseCookies(req).ibox_session;
@@ -235,7 +238,7 @@ function safeUser(row) {
     return { id: row.id, name: row.name, email: row.email, country: row.country, countryName: row.country_name,
         currency: { code: row.currency_code, name: row.currency_name, symbol: row.currency_symbol, rate: row.currency_rate } };
 }
-function validEmail(email) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
+function validEmail(email) { return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
 function validPassword(password) {
     if (password.length < 12 || password.length > 128) return false;
     const common = new Set(["password123456", "password123", "123456789012", "qwertyuiop12", "admin123456", "letmein123456"]);
@@ -247,7 +250,11 @@ async function readBody(req) {
         let rejected = false;
         req.on("data", chunk => {
             body += chunk;
-            if (body.length > MAX_BODY_BYTES && !rejected) { rejected = true; reject(new Error("Request too large.")); req.resume(); }
+            if (Buffer.byteLength(body, "utf8") > MAX_BODY_BYTES && !rejected) {
+                rejected = true;
+                reject(new Error("Request too large."));
+                req.resume();
+            }
         });
         req.on("end", () => {
             if (rejected) return;
@@ -280,11 +287,11 @@ function serveStatic(req, res) {
     catch { return json(res, 400, { message: "Invalid URL." }); }
     if (requestPath === "/") requestPath = "/index.html";
     const filePath = path.normalize(path.join(PUBLIC_DIR, requestPath));
-    if (!filePath.startsWith(PUBLIC_DIR + path.sep) && filePath !== path.join(PUBLIC_DIR, "index.html")) return json(res, 403, { message: "Forbidden." });
+    if (!filePath.startsWith(PUBLIC_DIR + path.sep)) return json(res, 403, { message: "Forbidden." });
     fs.stat(filePath, (error, stat) => {
         if (error || !stat.isFile()) return json(res, 404, { message: "Not found." });
         const ext = path.extname(filePath).toLowerCase();
-        const types = { ".html":"text/html; charset=utf-8", ".css":"text/css; charset=utf-8", ".js":"text/javascript; charset=utf-8", ".json":"application/json; charset=utf-8", ".png":"image/png", ".jpg":"image/jpeg", ".jpeg":"image/jpeg", ".svg":"image/svg+xml", ".ico":"image/x-icon" };
+        const types = { ".html":"text/html; charset=utf-8", ".css":"text/css; charset=utf-8", ".js":"text/javascript; charset=utf-8", ".json":"application/json; charset=utf-8", ".png":"image/png", ".jpg":"image/jpeg", ".jpeg":"image/jpeg", ".webp":"image/webp", ".svg":"image/svg+xml", ".ico":"image/x-icon", ".woff":"font/woff", ".woff2":"font/woff2" };
         addSecurityHeaders(res);
         res.setHeader("Cache-Control", IS_PRODUCTION ? "public, max-age=300" : "no-cache");
         res.writeHead(200, { "Content-Type": types[ext] || "application/octet-stream" });
@@ -305,6 +312,7 @@ async function handler(req, res) {
             const body = await readBody(req);
             const email = String(body.email || "").trim().toLowerCase();
             const password = String(body.password || "");
+            if (!validEmail(email) || password.length > 128) return json(res, 401, { message: "Invalid email or password." });
             const row = db.prepare(`SELECT u.*,c.name AS country_name,cur.code AS currency_code,cur.name AS currency_name,cur.symbol AS currency_symbol,cur.rate_from_usd AS currency_rate FROM users u JOIN countries c ON c.code=u.country_code JOIN currencies cur ON cur.code=c.currency_code WHERE u.email=?`).get(email);
             if (!row) return json(res, 401, { message: "Invalid email or password." });
             const attemptedHash = hashPassword(password, row.password_salt);
@@ -324,7 +332,7 @@ async function handler(req, res) {
             const password = String(body.password || "");
             const country = String(body.country || "").trim().toUpperCase();
             if (name.length < 2 || name.length > 80) return json(res, 400, { message: "Name must contain 2-80 characters." });
-            if (!validEmail(email) || email.length > 254) return json(res, 400, { message: "Enter a valid email address." });
+            if (!validEmail(email)) return json(res, 400, { message: "Enter a valid email address." });
             if (!validPassword(password)) return json(res, 400, { message: "Password must be 12-128 characters and should not be a common password." });
             const countryRow = db.prepare(`SELECT code FROM countries WHERE code=?`).get(country);
             if (!countryRow) return json(res, 400, { message: "Please select a valid country." });
@@ -381,10 +389,11 @@ async function handler(req, res) {
             const movie = db.prepare(`SELECT id,title,category,show_time,price_usd FROM movies WHERE id=?`).get(movieId);
             if (!movie) return json(res, 404, { message: "Movie not found." });
             const currencyRow = db.prepare(`SELECT cur.code,cur.symbol,cur.rate_from_usd FROM users u JOIN countries c ON c.code=u.country_code JOIN currencies cur ON cur.code=c.currency_code WHERE u.id=?`).get(user.id);
+            if (!currencyRow) return json(res, 400, { message: "User currency is unavailable." });
             const totalUsd = movie.price_usd * seats.length;
             const totalLocal = totalUsd * currencyRow.rate_from_usd;
-            const bookingId = "IBOX-" + Date.now().toString().slice(-8);
-            const transactionId = "DEMO-" + Date.now().toString().slice(-10);
+            const bookingId = createBookingId("IBOX");
+            const transactionId = createBookingId("DEMO");
             const now = new Date().toLocaleString("en-IN");
             db.exec("BEGIN IMMEDIATE");
             try {
@@ -392,9 +401,14 @@ async function handler(req, res) {
                 const occupied = db.prepare(`SELECT seat_number FROM seats WHERE movie_id=? AND seat_number IN (${placeholders}) AND booking_id IS NOT NULL`).all(movieId,...seats);
                 if (occupied.length) { db.exec("ROLLBACK"); return json(res,409,{message:`Seat(s) ${occupied.map(x=>x.seat_number).join(", ")} were just booked by another user.`}); }
                 db.prepare(`INSERT INTO bookings(id,user_id,movie_id,seats_json,total_usd,currency_code,total_local,payment_method,payment_status,transaction_id,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)`).run(bookingId,user.id,movieId,JSON.stringify(seats),totalUsd,currencyRow.code,totalLocal,paymentMethod,paymentStatus,transactionId,new Date().toISOString());
-                const updateSeat = db.prepare(`UPDATE seats SET user_id=?,booking_id=?,booked_at=? WHERE movie_id=? AND seat_number=?`);
+                const updateSeat = db.prepare(`UPDATE seats SET user_id=?,booking_id=?,booked_at=? WHERE movie_id=? AND seat_number=? AND booking_id IS NULL`);
                 const bookedAt = new Date().toISOString();
                 seats.forEach(seat => updateSeat.run(user.id,bookingId,bookedAt,movieId,seat));
+                const updatedCount = seats.reduce((count, seat) => count + Number(updateSeat.changes || 0), 0);
+                if (updatedCount !== seats.length) {
+                    db.exec("ROLLBACK");
+                    return json(res,409,{message:"One or more selected seats became unavailable. Please choose again."});
+                }
                 db.exec("COMMIT");
                 return json(res,201,{booking:{id:bookingId,user:user.name,movie:movie.title,category:movie.category,time:movie.show_time,seats,totalPaid:totalLocal,currencyCode:currencyRow.code,currencySymbol:currencyRow.symbol,paymentMethod,paymentStatus,transactionId,date:now}});
             } catch (error) { try { db.exec("ROLLBACK"); } catch {} throw error; }
