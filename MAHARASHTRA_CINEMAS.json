@@ -1,0 +1,21 @@
+{
+  "state": "Maharashtra",
+  "scope": "Cinema directory seed data; verify live showtimes before production use",
+  "cities": [
+    {"city":"Mumbai","theatres":["PVR ICON: Phoenix Palladium, Lower Parel Mumbai","INOX: R-City, Ghatkopar","Metro INOX Cinemas: Marine Lines","INOX Megaplex: Sky City Mall, Borivali","INOX: Megaplex, Inorbit Mall, Malad"]},
+    {"city":"Pune","theatres":["PVR: Phoenix Market City, Pune","PVR: Icon, The Pavillion Pune","PVR: Kumar Pacific, Pune","Cinepolis: Seasons Mall, Pune","City Pride: Kothrud","City Pride: Satara Road","INOX: Elpro City Square, Chinchwad","INOX Megaplex Phoenix Mall of the Millennium Wakad"]},
+    {"city":"Thane","theatres":["Cinepolis: Lake Shore, Thane","Cinepolis: High Street Mall, Thane","MovieMax: Eternity Mall, Thane","MovieMax: Wonder Mall, Thane","INOX: Korum Mall, Thane"]},
+    {"city":"Navi Mumbai","theatres":["Cinepolis: Nexus Seawoods, Nerul, Navi Mumbai","Cinepolis: Aurum, Ghansoli, Navi Mumbai","BMX Cinemas (Balaji Movieplex): Koparkhairane"]},
+    {"city":"Nagpur","theatres":["Cinepolis: VR Mall, Nagpur","MovieMax: Eternity, Nagpur","INOX: Jaswant Tuli Mall, Kamptee Road","AM Cinema Iconic: Jayanti Nagar VII, Besa, Nagpur","AM Cinema: Jaiprakash Nagar, Nagpur"]},
+    {"city":"Nashik","theatres":["PVR: City Center, Nashik","MovieMax: College Road, Nashik","Divya Cinemas: Nashik","Vijay Mamta Cinema: Nashik","Regimental, Mukta A2 Cinemas: Nashik"]},
+    {"city":"Chhatrapati Sambhajinagar","theatres":["INOX: Prozone Mall, Chhatrapati Sambhaji Nagar","INOX: Reliance Mall, Chhatrapati Sambhaji Nagar","Goldie Cinemark: Chhatrapati Sambhaji Nagar","Nupur Cinema: Chh.Sambhajinagar","Anjali Ratnadeep Cinema: Chhatrapati Sambhajinagar"]},
+    {"city":"Sangli","theatres":["AARC CinePRO: Sangli","Mukta A2 Cinemas: SFC Mega Mall, Sangli","Miraj Cinemas: Neww Pride, Sangli","Amar Cinema: Miraj","Minakshi Cinema: Palus"]},
+    {"city":"Kolhapur","theatres":["Hira Chitra Mandir, Hupari","Premchand Chitra Mandir, Kagal","Vasant Chitra Mandir, Kadoli"]},
+    {"city":"Solapur","theatres":["Prabhat Talkies, Solapur"]},
+    {"city":"Panvel","theatres":["Cineraj Cinema, New Panvel"]},
+    {"city":"Amravati","theatres":["Shyam, Paratwada"]},
+    {"city":"Jalgaon","theatres":["Metro Cinema, Jalgaon","Ulhas Chitramandir, Pachora"]},
+    {"city":"Ratnagiri","theatres":[]},
+    {"city":"Sindhudurg","theatres":[]}
+  ]
+}
