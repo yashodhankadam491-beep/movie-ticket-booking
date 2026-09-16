@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IBOX x CVR's - Movie Ticket Booking</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .cinema-directory{margin:18px 0;padding:16px;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:rgba(255,255,255,.045)}
+        .cinema-directory h3{margin:0 0 6px}.directory-subtitle{margin:0 0 12px;color:#aaa;font-size:.9rem}
+        .directory-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+        .directory-grid select{width:100%;padding:11px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:#151515;color:#fff}
+        .directory-status{margin-top:10px;color:#ffcc80;font-size:.88rem}.directory-status.ready{color:#7dff9d}.directory-status.error{color:#ffb3b3}
+        .selected-venue{margin:5px 0 0;color:#aaa;font-size:.9rem}.seat-venue,.summary-venue{margin:5px 0 14px;color:#aaa;font-size:.9rem}
+        @media(max-width:800px){.directory-grid{grid-template-columns:1fr 1fr}}@media(max-width:520px){.directory-grid{grid-template-columns:1fr}}
+    </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 </head>
 <body>
@@ -58,21 +67,34 @@
 
         <section id="movie-section" class="section">
             <div class="welcome-area">
-                <div><span class="small-heading">NOW SHOWING</span><h2>Welcome, <span id="user-display"></span>!</h2><p>Choose your movie and book your seats.</p><p class="user-currency" id="user-currency"></p></div>
+                <div><span class="small-heading">NOW SHOWING</span><h2>Welcome, <span id="user-display"></span>!</h2><p>Choose your cinema hall and movie to book your seats.</p><p class="user-currency" id="user-currency"></p><p class="selected-venue">🎬 <span id="selected-venue">Select a cinema hall to continue</span></p></div>
                 <button id="logout-btn" class="logout-btn" type="button">Logout</button>
             </div>
+
+            <div class="cinema-directory" aria-label="Maharashtra cinema directory">
+                <h3>📍 Select Cinema</h3>
+                <p class="directory-subtitle">Maharashtra booking flow: District → City → Cinema Hall</p>
+                <div class="directory-grid">
+                    <select id="state-select" aria-label="State"><option value="Maharashtra">Maharashtra</option></select>
+                    <select id="district-select" aria-label="District"><option value="">Loading districts...</option></select>
+                    <select id="city-select" aria-label="City" disabled><option value="">Select City</option></select>
+                    <select id="theatre-select" aria-label="Cinema Hall" disabled><option value="">Select Cinema Hall</option></select>
+                </div>
+                <p id="directory-status" class="directory-status" role="status">Loading Maharashtra cinema directory...</p>
+            </div>
+
             <div class="controls">
                 <div class="search-box"><span>🔍</span><input type="search" id="search-bar" placeholder="Search movies..." autocomplete="off"></div>
                 <select id="category-filter" aria-label="Movie category">
                     <option value="All">All Categories</option><option value="Action">Action</option><option value="Comedy">Comedy</option><option value="Sci-Fi">Sci-Fi</option>
                 </select>
             </div>
-            <div id="movie-list" class="movie-grid"></div>
+            <div id="movie-list" class="movie-grid" aria-disabled="true"></div>
         </section>
 
         <section id="seat-section" class="section">
             <button id="back-btn" class="top-back-btn" type="button">← Back to Movies</button>
-            <div class="booking-heading"><span class="small-heading">SELECT YOUR SEATS</span><h2><span id="selected-movie-title"></span></h2><p>🕐 Showtime: <strong id="selected-movie-time"></strong> &nbsp; | &nbsp; 💵 Price: <strong id="currency-symbol-seat">$</strong><strong id="selected-movie-price"></strong></p></div>
+            <div class="booking-heading"><span class="small-heading">SELECT YOUR SEATS</span><h2><span id="selected-movie-title"></span></h2><p class="seat-venue">📍 <span id="seat-venue">Cinema hall not selected</span></p><p>🕐 Showtime: <strong id="selected-movie-time"></strong> &nbsp; | &nbsp; 💵 Price: <strong id="currency-symbol-seat">$</strong><strong id="selected-movie-price"></strong></p></div>
             <div class="screen-area"><div class="screen">SCREEN</div><p>All eyes this way</p></div>
             <div id="seat-map" class="seat-map"></div>
             <div class="seat-info"><div><span class="legend-seat available"></span>Available</div><div><span class="legend-seat selected"></span>Selected</div><div><span class="legend-seat occupied"></span>Occupied</div></div>
@@ -95,7 +117,7 @@
         </div>
 
         <section id="summary-section" class="section">
-            <div class="success-animation">✓</div><h2 class="confirmed-title">Booking Confirmed!</h2><p class="confirmed-subtitle">Thank you for booking with IBOX x CVR's.</p>
+            <div class="success-animation">✓</div><h2 class="confirmed-title">Booking Confirmed!</h2><p class="confirmed-subtitle">Thank you for booking with IBOX x CVR's.</p><p class="summary-venue">📍 <span id="summary-venue">Cinema hall not selected</span></p>
             <div id="summary-details" class="summary-card"></div>
             <div class="summary-actions"><button id="print-receipt-btn" class="print-receipt-btn" type="button">🖨️ Print Receipt</button><button id="another-ticket-btn" type="button">🎬 Book Another Ticket</button><button id="summary-logout-btn" class="secondary-btn" type="button">Logout</button></div>
         </section>
@@ -103,5 +125,6 @@
 
     <footer class="footer"><p>© 2026 <strong>IBOX x CVR's</strong> · Movie Ticket Booking System</p><p>🎬 Enjoy the Movie!</p></footer>
     <script src="script.js" defer></script>
+    <script src="cinema-directory.js" defer></script>
 </body>
 </html>
