@@ -1,470 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>IBOX x CVR's - Movie Ticket Booking</title>
-
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 </head>
-
 <body>
-
-    <!-- ================================
-         HEADER / LOGO
-    ================================= -->
-
     <header class="site-header">
-
         <div class="brand">
-
-            <div class="logo">
-                <span class="logo-i">I</span>
-                <span class="logo-box">BOX</span>
-            </div>
-
-            <div class="brand-name">
-                <h1>IBOX x CVR's</h1>
-                <p>Movie Ticket Booking</p>
-            </div>
-
+            <div class="logo"><span class="logo-i">I</span><span class="logo-box">BOX</span></div>
+            <div class="brand-name"><h1>IBOX x CVR's</h1><p>Movie Ticket Booking</p></div>
         </div>
-
     </header>
 
-
-    <!-- ================================
-         MAIN CONTAINER
-    ================================= -->
-
     <main class="container">
-
-        <!-- ============================
-             LOGIN SECTION
-        ============================= -->
-
         <section id="login-section" class="section active">
-
             <div class="login-wrapper">
-
                 <div class="login-image">
-
-                    <div class="login-overlay">
-
-                        <div class="clapper">
-                            🎬
-                        </div>
-
-                        <h2>Welcome to IBOX</h2>
-
-                        <p>
-                            Your movie. Your seat. Your experience.
-                        </p>
-
-                    </div>
-
+                    <div class="login-overlay"><div class="clapper">🎬</div><h2>Welcome to IBOX</h2><p>Your movie. Your seat. Your experience.</p></div>
                 </div>
-
-
                 <div class="login-card">
                     <div class="login-logo">🎬</div>
-
                     <h2>Login / Register</h2>
-
                     <div class="auth-tabs">
                         <button type="button" class="auth-tab active" id="login-tab">Login</button>
                         <button type="button" class="auth-tab" id="register-tab">Register</button>
                     </div>
-
-                    <!-- LOGIN -->
                     <form id="login-form" class="auth-form">
                         <p class="login-subtitle">Sign in to continue booking your movie.</p>
-
                         <label for="login-email">Email</label>
                         <input type="email" id="login-email" placeholder="Enter your email" autocomplete="email" required>
-
                         <label for="login-password">Password</label>
                         <input type="password" id="login-password" placeholder="Enter your password" autocomplete="current-password" required>
-
                         <button type="submit" id="login-btn">Continue</button>
                     </form>
-
-                    <!-- REGISTER -->
                     <form id="register-form" class="auth-form hidden">
                         <p class="login-subtitle">Create your account before booking.</p>
-
                         <label for="register-name">Full Name</label>
-                        <input type="text" id="register-name" placeholder="Enter your full name" autocomplete="name" minlength="2" required>
-
+                        <input type="text" id="register-name" placeholder="Enter your full name" autocomplete="name" minlength="2" maxlength="100" required>
                         <label for="register-email">Email</label>
-                        <input type="email" id="register-email" placeholder="Enter your email" autocomplete="email" required>
-
+                        <input type="email" id="register-email" placeholder="Enter your email" autocomplete="email" maxlength="254" required>
                         <label for="register-password">Password</label>
-                        <input type="password" id="register-password" placeholder="Minimum 6 characters" autocomplete="new-password" minlength="6" required>
-
-                        <label for="country-select">Country</label>
-                        <select id="country-select" required>
+                        <input type="password" id="register-password" placeholder="Minimum 12 characters" autocomplete="new-password" minlength="12" maxlength="128" required>
+                        <select id="country-select" required aria-label="Country">
                             <option value="">Loading countries...</option>
                         </select>
-
-                        <div class="currency-preview" id="currency-preview">
-                            <span>🌍 Currency</span>
-                            <strong id="currency-display">Select a country</strong>
-                        </div>
-
+                        <div class="currency-preview" id="currency-preview"><span>🌍 Currency</span><strong id="currency-display">Select a country</strong></div>
                         <button type="submit" id="register-btn">Create Account</button>
                     </form>
-
-                    <p id="auth-message" class="auth-message" role="alert"></p>
-
-                    <p class="small-text">
-                        Prices automatically use the currency associated with your selected country.
-                        <br><strong>IBOX x CVR's</strong>
-                    </p>
+                    <p id="auth-message" class="auth-message" role="alert" aria-live="polite"></p>
+                    <p class="small-text">Prices automatically use the currency associated with your selected country.<br><strong>IBOX x CVR's</strong></p>
                 </div>
             </div>
         </section>
-
-
-        <!-- ============================
-             MOVIE SECTION
-        ============================= -->
 
         <section id="movie-section" class="section">
-
             <div class="welcome-area">
-
-                <div>
-
-                    <span class="small-heading">
-                        NOW SHOWING
-                    </span>
-
-                    <h2>
-                        Welcome,
-                        <span id="user-display"></span>!
-                    </h2>
-
-                    <p>
-                        Choose your movie and book your seats.
-                    </p>
-                    <p class="user-currency" id="user-currency"></p>
-
-                </div>
-
-                <button
-                    id="logout-btn"
-                    class="logout-btn">
-                    Logout
-                </button>
-
+                <div><span class="small-heading">NOW SHOWING</span><h2>Welcome, <span id="user-display"></span>!</h2><p>Choose your movie and book your seats.</p><p class="user-currency" id="user-currency"></p></div>
+                <button id="logout-btn" class="logout-btn" type="button">Logout</button>
             </div>
-
-
-            <!-- SEARCH / FILTER -->
-
             <div class="controls">
-
-                <div class="search-box">
-
-                    <span>🔍</span>
-
-                    <input
-                        type="text"
-                        id="search-bar"
-                        placeholder="Search movies..."
-                    >
-
-                </div>
-
-
-                <select id="category-filter">
-
-                    <option value="All">
-                        All Categories
-                    </option>
-
-                    <option value="Action">
-                        Action
-                    </option>
-
-                    <option value="Comedy">
-                        Comedy
-                    </option>
-
-                    <option value="Sci-Fi">
-                        Sci-Fi
-                    </option>
-
+                <div class="search-box"><span>🔍</span><input type="search" id="search-bar" placeholder="Search movies..." autocomplete="off"></div>
+                <select id="category-filter" aria-label="Movie category">
+                    <option value="All">All Categories</option><option value="Action">Action</option><option value="Comedy">Comedy</option><option value="Sci-Fi">Sci-Fi</option>
                 </select>
-
             </div>
-
-
-            <!-- MOVIE LIST -->
-
-            <div
-                id="movie-list"
-                class="movie-grid">
-            </div>
-
+            <div id="movie-list" class="movie-grid"></div>
         </section>
-
-
-        <!-- ============================
-             SEAT SECTION
-        ============================= -->
 
         <section id="seat-section" class="section">
-
-            <button
-                id="back-btn"
-                class="top-back-btn">
-                ← Back to Movies
-            </button>
-
-
-            <div class="booking-heading">
-
-                <span class="small-heading">
-                    SELECT YOUR SEATS
-                </span>
-
-                <h2>
-                    <span id="selected-movie-title"></span>
-                </h2>
-
-                <p>
-
-                    🕐 Showtime:
-                    <strong id="selected-movie-time"></strong>
-
-                    &nbsp; | &nbsp;
-
-                    💵 Price:
-                    <strong id="currency-symbol-seat">$</strong><strong id="selected-movie-price"></strong>
-
-                </p>
-
-            </div>
-
-
-            <!-- SCREEN -->
-
-            <div class="screen-area">
-
-                <div class="screen">
-                    SCREEN
-                </div>
-
-                <p>
-                    All eyes this way
-                </p>
-
-            </div>
-
-
-            <!-- SEAT MAP -->
-
-            <div
-                id="seat-map"
-                class="seat-map">
-            </div>
-
-
-            <!-- LEGEND -->
-
-            <div class="seat-info">
-
-                <div>
-                    <span class="legend-seat available"></span>
-                    Available
-                </div>
-
-                <div>
-                    <span class="legend-seat selected"></span>
-                    Selected
-                </div>
-
-                <div>
-                    <span class="legend-seat occupied"></span>
-                    Occupied
-                </div>
-
-            </div>
-
-
-            <!-- CALCULATION -->
-
-            <div class="calculation-bar">
-
-                <div class="calculation-item">
-
-                    <span>
-                        Selected Seats
-                    </span>
-
-                    <strong id="count">
-                        0
-                    </strong>
-
-                </div>
-
-
-                <div class="calculation-item">
-
-                    <span>
-                        Total Price
-                    </span>
-
-                    <strong>
-                        <span id="currency-symbol-total">$</span><span id="total">0</span>
-                    </strong>
-
-                </div>
-
-
-                <button id="book-btn">
-                    🎟️ Book Now
-                </button>
-
-            </div>
-
+            <button id="back-btn" class="top-back-btn" type="button">← Back to Movies</button>
+            <div class="booking-heading"><span class="small-heading">SELECT YOUR SEATS</span><h2><span id="selected-movie-title"></span></h2><p>🕐 Showtime: <strong id="selected-movie-time"></strong> &nbsp; | &nbsp; 💵 Price: <strong id="currency-symbol-seat">$</strong><strong id="selected-movie-price"></strong></p></div>
+            <div class="screen-area"><div class="screen">SCREEN</div><p>All eyes this way</p></div>
+            <div id="seat-map" class="seat-map"></div>
+            <div class="seat-info"><div><span class="legend-seat available"></span>Available</div><div><span class="legend-seat selected"></span>Selected</div><div><span class="legend-seat occupied"></span>Occupied</div></div>
+            <div class="calculation-bar"><div class="calculation-item"><span>Selected Seats</span><strong id="count">0</strong></div><div class="calculation-item"><span>Total Price</span><strong><span id="currency-symbol-total">$</span><span id="total">0</span></strong></div><button id="book-btn" type="button">🎟️ Book Now</button></div>
         </section>
-
-
-        <!-- ============================
-             DEMO PAYMENT MODAL
-        ============================= -->
 
         <div id="payment-modal" class="payment-modal" aria-hidden="true">
             <div class="payment-backdrop" id="payment-backdrop"></div>
-
             <div class="payment-card" role="dialog" aria-modal="true" aria-labelledby="payment-title">
                 <button type="button" id="close-payment" class="payment-close" aria-label="Close payment">×</button>
-
-                <div class="payment-header">
-                    <span class="payment-icon">💳</span>
-                    <div>
-                        <span class="small-heading">SECURE CHECKOUT</span>
-                        <h2 id="payment-title">Complete Demo Payment</h2>
-                        <p>This is a <strong>fake/demo payment</strong>. No real money will be transferred.</p>
-                    </div>
-                </div>
-
-                <div class="payment-total-box">
-                    <span>Amount to Pay</span>
-                    <strong><span id="payment-currency-symbol">₹</span><span id="payment-total">0.00</span> <span id="payment-currency-code">INR</span></strong>
-                </div>
-
-                <div class="payment-methods">
-                    <button type="button" class="payment-method active" data-method="qr">📱 QR Code</button>
-                    <button type="button" class="payment-method" data-method="upi">🔗 UPI ID</button>
-                </div>
-
-                <div id="qr-payment-panel" class="payment-panel">
-                    <div id="payment-qr" class="payment-qr"></div>
-                    <p class="payment-hint">Scan this demo QR code with any QR scanner.</p>
-                    <button type="button" id="fake-scan-btn" class="fake-scan-btn">📷 Simulate QR Scan</button>
-                    <p id="scan-status" class="scan-status">Waiting for demo scan...</p>
-                </div>
-
-                <div id="upi-payment-panel" class="payment-panel hidden">
-                    <label for="demo-upi-id">Demo UPI ID</label>
-                    <div class="upi-row">
-                        <input id="demo-upi-id" type="text" value="iboxcvr@upi" readonly>
-                        <button type="button" id="copy-upi-btn">Copy</button>
-                    </div>
-                    <p class="payment-hint">Use this displayed ID only for the project demonstration.</p>
-                    <p id="upi-copy-status" class="scan-status"></p>
-                </div>
-
-                <label class="payment-check">
-                    <input type="checkbox" id="demo-payment-check">
-                    <span>I confirm that this is a completed <strong>demo payment</strong>.</span>
-                </label>
-
+                <div class="payment-header"><span class="payment-icon">💳</span><div><span class="small-heading">SECURE CHECKOUT</span><h2 id="payment-title">Complete Demo Payment</h2><p>This is a <strong>fake/demo payment</strong>. No real money will be transferred.</p></div></div>
+                <div class="payment-total-box"><span>Amount to Pay</span><strong><span id="payment-currency-symbol">₹</span><span id="payment-total">0.00</span> <span id="payment-currency-code">INR</span></strong></div>
+                <div class="payment-methods"><button type="button" class="payment-method active" data-method="qr">📱 QR Code</button><button type="button" class="payment-method" data-method="upi">🔗 UPI ID</button></div>
+                <div id="qr-payment-panel" class="payment-panel"><div id="payment-qr" class="payment-qr"></div><p class="payment-hint">Scan this demo QR code with any QR scanner.</p><button type="button" id="fake-scan-btn" class="fake-scan-btn">📷 Simulate QR Scan</button><p id="scan-status" class="scan-status">Waiting for demo scan...</p></div>
+                <div id="upi-payment-panel" class="payment-panel hidden"><label for="demo-upi-id">Demo UPI ID</label><div class="upi-row"><input id="demo-upi-id" type="text" value="iboxcvr@upi" readonly><button type="button" id="copy-upi-btn">Copy</button></div><p class="payment-hint">Use this displayed ID only for the project demonstration.</p><p id="upi-copy-status" class="scan-status"></p></div>
+                <label class="payment-check"><input type="checkbox" id="demo-payment-check"><span>I confirm that this is a completed <strong>demo payment</strong>.</span></label>
                 <button type="button" id="confirm-payment-btn" class="confirm-payment-btn">✓ Complete Demo Payment</button>
-                <p id="payment-message" class="payment-message" role="alert"></p>
+                <p id="payment-message" class="payment-message" role="alert" aria-live="polite"></p>
             </div>
         </div>
 
-
-        <!-- ============================
-             SUMMARY SECTION
-        ============================= -->
-
         <section id="summary-section" class="section">
-
-            <div class="success-animation">
-                ✓
-            </div>
-
-            <h2 class="confirmed-title">
-                Booking Confirmed!
-            </h2>
-
-            <p class="confirmed-subtitle">
-                Thank you for booking with IBOX x CVR's.
-            </p>
-
-
-            <div
-                id="summary-details"
-                class="summary-card">
-            </div>
-
-
-            <div class="summary-actions">
-
-                <button
-                    id="print-receipt-btn"
-                    class="print-receipt-btn">
-                    🖨️ Print Receipt
-                </button>
-
-                <button
-                    id="another-ticket-btn">
-                    🎬 Book Another Ticket
-                </button>
-
-                <button
-                    id="summary-logout-btn"
-                    class="secondary-btn">
-                    Logout
-                </button>
-
-            </div>
-
+            <div class="success-animation">✓</div><h2 class="confirmed-title">Booking Confirmed!</h2><p class="confirmed-subtitle">Thank you for booking with IBOX x CVR's.</p>
+            <div id="summary-details" class="summary-card"></div>
+            <div class="summary-actions"><button id="print-receipt-btn" class="print-receipt-btn" type="button">🖨️ Print Receipt</button><button id="another-ticket-btn" type="button">🎬 Book Another Ticket</button><button id="summary-logout-btn" class="secondary-btn" type="button">Logout</button></div>
         </section>
-
     </main>
 
-
-    <!-- ================================
-         FOOTER
-    ================================= -->
-
-    <footer class="footer">
-
-        <p>
-            © 2026
-            <strong>IBOX x CVR's</strong>
-            · Movie Ticket Booking System
-        </p>
-
-        <p>
-            🎬 Enjoy the Movie!
-        </p>
-
-    </footer>
-
-
-    <script src="script.js"></script>
-
+    <footer class="footer"><p>© 2026 <strong>IBOX x CVR's</strong> · Movie Ticket Booking System</p><p>🎬 Enjoy the Movie!</p></footer>
+    <script src="script.js" defer></script>
 </body>
-
 </html>
