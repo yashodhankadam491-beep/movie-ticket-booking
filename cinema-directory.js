@@ -27,31 +27,23 @@
         select.disabled = items.length === 0;
     }
 
-    function getDistrict() {
-        return directory?.districts?.find(item => item.district === selection.district) || null;
-    }
-
-    function getCity() {
-        return getDistrict()?.cities?.find(item => item.city === selection.city) || null;
-    }
-
-    function persist() {
-        localStorage.setItem("iboxCinemaSelection", JSON.stringify(selection));
-    }
+    function getDistrict() { return directory?.districts?.find(item => item.district === selection.district) || null; }
+    function getCity() { return getDistrict()?.cities?.find(item => item.city === selection.city) || null; }
+    function persist() { localStorage.setItem("iboxCinemaSelection", JSON.stringify(selection)); }
 
     function restore() {
         try {
             const saved = JSON.parse(localStorage.getItem("iboxCinemaSelection") || "null");
             if (saved?.state === "Maharashtra") selection = { ...selection, ...saved };
-        } catch {
-            localStorage.removeItem("iboxCinemaSelection");
-        }
+        } catch { localStorage.removeItem("iboxCinemaSelection"); }
+    }
+
+    function notifyChange() {
+        window.dispatchEvent(new CustomEvent("ibox:cinema-change", { detail: { ...selection } }));
     }
 
     function updateVenueText() {
-        const text = selection.theatre
-            ? `${selection.theatre} · ${selection.city}, ${selection.district}, Maharashtra`
-            : "Select a cinema hall to continue";
+        const text = selection.theatre ? `${selection.theatre} · ${selection.city}, ${selection.district}, Maharashtra` : "Select a cinema hall to continue";
         if (selectedVenue) selectedVenue.textContent = text;
         if (seatVenue) seatVenue.textContent = selection.theatre ? text : "Cinema hall not selected";
         if (summaryVenue) summaryVenue.textContent = selection.theatre ? text : "Cinema hall not selected";
@@ -62,33 +54,29 @@
         if (movieList) movieList.setAttribute("aria-disabled", String(!ready));
         if (directoryStatus) {
             directoryStatus.className = ready ? "directory-status ready" : "directory-status";
-            directoryStatus.textContent = ready
-                ? `✓ ${selection.theatre} selected. Choose a movie below.`
-                : "Select District → City → Cinema Hall before choosing a movie.";
+            directoryStatus.textContent = ready ? `✓ ${selection.theatre} selected. Choose a movie below.` : "Select District → City → Cinema Hall before choosing a movie.";
         }
+        notifyChange();
     }
 
     function populateDistricts() {
         const districts = (directory?.districts || []).map(item => item.district);
         setOptions(districtSelect, districts, "Select District");
-        if (districts.includes(selection.district)) districtSelect.value = selection.district;
-        else selection.district = "";
+        if (districts.includes(selection.district)) districtSelect.value = selection.district; else selection.district = "";
         populateCities();
     }
 
     function populateCities() {
         const cities = (getDistrict()?.cities || []).map(item => item.city);
         setOptions(citySelect, cities, "Select City");
-        if (cities.includes(selection.city)) citySelect.value = selection.city;
-        else selection.city = "";
+        if (cities.includes(selection.city)) citySelect.value = selection.city; else selection.city = "";
         populateTheatres();
     }
 
     function populateTheatres() {
         const theatres = getCity()?.theatres || [];
         setOptions(theatreSelect, theatres, "Select Cinema Hall");
-        if (theatres.includes(selection.theatre)) theatreSelect.value = selection.theatre;
-        else selection.theatre = "";
+        if (theatres.includes(selection.theatre)) theatreSelect.value = selection.theatre; else selection.theatre = "";
         updateVenueText();
         updateMovieAvailabilityState();
     }
