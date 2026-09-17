@@ -5,13 +5,13 @@ The project keeps the existing booking UI while connecting the booking flow to a
 ## Current architecture
 
 ```text
-User
-  ↓
-Login / Register
+Maharashtra
   ↓
 District → City → Cinema Hall
   ↓
-Date → Show Time → Movie
+Screen 1 / Screen 2 / Screen 3 / ...
+  ↓
+Movie → Date → Show Time
   ↓
 Show-specific Seats
   ↓
@@ -27,7 +27,7 @@ Admin
   ↓
 /admin.html
   ↓
-Movies / Cinemas / Shows / Bookings
+Movies / Cinemas / Screens / Shows / Bookings
 ```
 
 ## Included
@@ -35,12 +35,18 @@ Movies / Cinemas / Shows / Bookings
 - Login + Register.
 - Country → currency mapping.
 - Maharashtra district/city/cinema directory.
-- Database-backed `cinemas`, `shows` and `show_seats` tables.
-- Cinema → date → show-time → movie filtering through `/api/catalog`.
+- Database-backed `cinemas`, `screens`, `shows` and `show_seats` tables.
+- Cinema → screen → date → show-time → movie filtering through `/api/catalog`.
+- Screen-specific seat capacity; existing cinemas are bootstrapped with `Screen 1`.
+- New cinemas created from the admin dashboard automatically receive `Screen 1` with 32 seats.
 - Show-specific seats and temporary 10-minute locks during checkout.
 - User booking history at `My Bookings`.
 - Admin dashboard at `/admin.html`.
-- Admin movie/cinema/show management and booking view.
+- Admin movie add/edit/delete management.
+- Admin cinema creation.
+- Admin screen add/edit/activate/deactivate/delete management.
+- Admin show add/edit/activate/deactivate/delete management with Cinema + Screen validation.
+- Admin booking view and summary counts.
 - Razorpay Standard Checkout with server-side order creation.
 - Server-side Razorpay HMAC signature verification and captured-payment verification.
 - SQLite WAL mode, hashed sessions, CSRF/origin checks, rate limits and security headers.
@@ -82,15 +88,16 @@ The cinema directory is seeded from `MAHARASHTRA_CINEMAS.json`. On startup the s
 
 After logging in with an email listed in `ADMIN_EMAILS`, open `/admin.html`.
 
-The dashboard can:
+The dashboard provides:
 
-- Add movies.
-- Add cinema halls.
-- Add shows with date, time and INR price.
-- View recent bookings.
-- View catalogue/booking summary counts.
+1. **Movies** — add, edit and delete unused movies.
+2. **Cinemas** — add Maharashtra cinema halls; every new cinema gets `Screen 1` automatically.
+3. **Screens** — add multiple screens per cinema, set seat capacity (1–500), rename, activate/deactivate and delete unused screens.
+4. **Shows** — select Cinema → Screen → Movie → Date → Time → INR price. The selected screen's capacity creates the show seats.
+5. **Show management** — edit date/time/price, activate/deactivate and delete shows that have no bookings.
+6. **Bookings** — view customer, movie, cinema, date/time, seats and paid amount.
 
-For production, admin authentication should be upgraded to a dedicated role/permission system rather than relying only on an environment email allow-list.
+A screen with existing shows or bookings should be deactivated rather than deleted. A movie/cinema/show with historical booking dependencies is protected from destructive deletion where applicable.
 
 ## Razorpay payment
 
