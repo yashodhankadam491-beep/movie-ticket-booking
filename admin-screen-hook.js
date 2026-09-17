@@ -1,6 +1,5 @@
 "use strict";
 
-// Startup bridge for Cinema -> Screen -> Show admin management.
 const http = require("node:http");
 const path = require("node:path");
 const crypto = require("node:crypto");
@@ -35,7 +34,6 @@ async function routeAdminExtras(req,res,url){
   if(!url.pathname.startsWith("/api/admin/"))return false;
   if(!isAdmin(req)){json(res,403,{message:"Admin access required."});return true;}
 
-  // New cinemas automatically receive Screen 1 so the booking flow is usable immediately.
   if(req.method==="POST"&&url.pathname==="/api/admin/cinemas"){
     let b;try{b=await readJson(req)}catch{return json(res,400,{message:"Invalid request."});}
     const district=clean(b.district,80),city=clean(b.city,80),name=clean(b.name,160),state=clean(b.state||"Maharashtra",40)||"Maharashtra";
@@ -73,5 +71,18 @@ async function routeAdminExtras(req,res,url){
 }
 
 const originalCreateServer=http.createServer;
-http.createServer=function wrappedCreateServer(...args){const originalHandler=typeof args[0]==="function"?args[0]:null;if(!originalHandler)return originalCreateServer.apply(this,args);args[0]=async function wrappedRequest(req,res){let url;try{url=new URL(req.url,`http://${req.headers.host||"localhost"`);}catch{return json(res,400,{message:"Invalid URL."});}if(url.pathname.startsWith("/api/admin/")){try{const handled=await routeAdminExtras(req,res,url);if(handled)return;}catch(error){console.error("[admin-screen-hook]",error);if(!res.headersSent)return json(res,500,{message:"Admin request failed."});return;}}return originalHandler(req,res);};return originalCreateServer.apply(this,args);};
+http.createServer=function wrappedCreateServer(...args){
+  const originalHandler=typeof args[0]==="function"?args[0]:null;
+  if(!originalHandler)return originalCreateServer.apply(this,args);
+  args[0]=async function wrappedRequest(req,res){
+    let url;
+    try{url=new URL(req.url,"http://"+(req.headers.host||"localhost"));}catch{return json(res,400,{message:"Invalid URL."});}
+    if(url.pathname.startsWith("/api/admin/")){
+      try{const handled=await routeAdminExtras(req,res,url);if(handled)return;}
+      catch(error){console.error("[admin-screen-hook]",error);if(!res.headersSent)return json(res,500,{message:"Admin request failed."});return;}
+    }
+    return originalHandler(req,res);
+  };
+  return originalCreateServer.apply(this,args);
+};
 console.log("[screen-hook] Cinema -> Screen -> Show admin integration loaded.");
