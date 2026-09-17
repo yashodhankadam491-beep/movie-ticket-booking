@@ -94,9 +94,9 @@ For production, admin authentication should be upgraded to a dedicated role/perm
 
 ## Razorpay payment
 
-The project uses Razorpay Standard Checkout. The server creates a Razorpay order before checkout, the browser receives only the Key ID, and the server verifies the returned payment signature and payment status before confirming seats. Razorpay's documented flow requires a server-created order and server-side signature verification. citeturn0search0
+The project uses Razorpay Standard Checkout. The server creates a Razorpay order before checkout, the browser receives only the Key ID, and the server verifies the returned payment signature and payment status before confirming seats.
 
-Use Razorpay **Test Mode** first. Test payments do not move real money. After end-to-end testing, replace the test credentials with Live Mode credentials and complete Razorpay's go-live requirements before accepting actual payments. citeturn0search0
+Use Razorpay **Test Mode** first. Test payments do not move real money. After end-to-end testing, replace the test credentials with Live Mode credentials and complete the provider's go-live requirements before accepting actual payments.
 
 ## Backups
 
