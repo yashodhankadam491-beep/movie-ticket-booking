@@ -83,12 +83,22 @@ function amountForMovie(movie, seats) {
 }
 
 function verifySignature(orderId, paymentId, signature) {
-  const expected = crypto.createHmac("sha256", KEY_SECRET)
-    .update(`${orderId}|${paymentId}`)
-    .digest("hex");
+  const expected = crypto.createHmac("sha256", KEY_SECRET).update(`${orderId}|${paymentId}`).digest("hex");
   const actual = String(signature || "");
   if (expected.length !== actual.length) return false;
   return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(actual));
+}
+
+function ensureBookingPaymentColumns() {
+  for (const statement of [
+    "ALTER TABLE bookings ADD COLUMN razorpay_order_id TEXT",
+    "ALTER TABLE bookings ADD COLUMN razorpay_payment_id TEXT",
+    "ALTER TABLE bookings ADD COLUMN razorpay_signature TEXT"
+  ]) {
+    try { db.exec(statement); } catch (error) {
+      if (!String(error.message).toLowerCase().includes("duplicate column")) throw error;
+    }
+  }
 }
 
 async function handle(req, res) {
@@ -111,6 +121,13 @@ async function handle(req, res) {
     const placeholders = seats.map(() => "?").join(",");
     const occupied = db.prepare(`SELECT seat_number FROM seats WHERE movie_id=? AND seat_number IN (${placeholders}) AND booking_id IS NOT NULL`).all(movieId, ...seats);
     if (occupied.length) return json(res, 409, { message: `Seat(s) ${occupied.map(x => x.seat_number).join(", ")} are already booked.` });
+
+    const activeOrders = db.prepare("SELECT seats_json FROM payment_orders WHERE movie_id=? AND status='CREATED' AND created_at>? ").all(movieId, new Date(Date.now() - 15 * 60 * 1000).toISOString());
+    const requested = new Set(seats);
+    for (const row of activeOrders) {
+      const existing = JSON.parse(row.seats_json).map(Number);
+      if (existing.some(seat => requested.has(seat))) return json(res, 409, { message: "One or more seats are currently in another payment session. Please choose again in a moment." });
+    }
 
     const amountInr = amountForMovie(movie, seats);
     if (!Number.isInteger(amountInr) || amountInr < 100) return json(res, 400, { message: "Payment amount is invalid." });
@@ -135,7 +152,6 @@ async function handle(req, res) {
     let body;
     try { body = await readBody(req); } catch { return json(res, 400, { message: "Invalid booking request." }); }
     if (String(body.paymentStatus || "") !== "PAID (RAZORPAY)") return json(res, 400, { message: "Real Razorpay payment is required. Demo payment is disabled." });
-
     if (!razorpay) return json(res, 503, { message: "Razorpay is not configured." });
     const user = getUser(req);
     if (!user) return json(res, 401, { message: "Please login first." });
@@ -149,9 +165,7 @@ async function handle(req, res) {
 
     const pending = db.prepare("SELECT * FROM payment_orders WHERE razorpay_order_id=? AND user_id=? AND status='CREATED'").get(orderId, user.id);
     if (!pending) return json(res, 409, { message: "Payment order is invalid, expired, or already used." });
-    if (Number(pending.movie_id) !== movieId || JSON.stringify(JSON.parse(pending.seats_json).map(Number).sort((a,b)=>a-b)) !== JSON.stringify([...seats].sort((a,b)=>a-b))) {
-      return json(res, 400, { message: "Payment order does not match the selected movie or seats." });
-    }
+    if (Number(pending.movie_id) !== movieId || JSON.stringify(JSON.parse(pending.seats_json).map(Number).sort((a,b)=>a-b)) !== JSON.stringify([...seats].sort((a,b)=>a-b))) return json(res, 400, { message: "Payment order does not match the selected movie or seats." });
     if (!verifySignature(orderId, paymentId, signature)) return json(res, 400, { message: "Razorpay signature verification failed." });
 
     try {
@@ -164,6 +178,7 @@ async function handle(req, res) {
       return json(res, 502, { message: "Could not verify the Razorpay payment." });
     }
 
+    ensureBookingPaymentColumns();
     const movie = db.prepare("SELECT id,title,category,show_time,price_usd FROM movies WHERE id=?").get(movieId);
     if (!movie) return json(res, 404, { message: "Movie not found." });
     const placeholders = seats.map(() => "?").join(",");
