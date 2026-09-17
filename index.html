@@ -15,6 +15,7 @@
         @media(max-width:800px){.directory-grid{grid-template-columns:1fr 1fr}}@media(max-width:520px){.directory-grid{grid-template-columns:1fr}}
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
 </head>
 <body>
     <header class="site-header">
@@ -105,13 +106,13 @@
             <div class="payment-backdrop" id="payment-backdrop"></div>
             <div class="payment-card" role="dialog" aria-modal="true" aria-labelledby="payment-title">
                 <button type="button" id="close-payment" class="payment-close" aria-label="Close payment">×</button>
-                <div class="payment-header"><span class="payment-icon">💳</span><div><span class="small-heading">SECURE CHECKOUT</span><h2 id="payment-title">Complete Demo Payment</h2><p>This is a <strong>fake/demo payment</strong>. No real money will be transferred.</p></div></div>
+                <div class="payment-header"><span class="payment-icon">💳</span><div><span class="small-heading">SECURE CHECKOUT</span><h2 id="payment-title">Secure Razorpay Checkout</h2><p>Real payment gateway. Your payment is processed securely by Razorpay.</p></div></div>
                 <div class="payment-total-box"><span>Amount to Pay</span><strong><span id="payment-currency-symbol">₹</span><span id="payment-total">0.00</span> <span id="payment-currency-code">INR</span></strong></div>
-                <div class="payment-methods"><button type="button" class="payment-method active" data-method="qr">📱 QR Code</button><button type="button" class="payment-method" data-method="upi">🔗 UPI ID</button></div>
-                <div id="qr-payment-panel" class="payment-panel"><div id="payment-qr" class="payment-qr"></div><p class="payment-hint">Scan this demo QR code with any QR scanner.</p><button type="button" id="fake-scan-btn" class="fake-scan-btn">📷 Simulate QR Scan</button><p id="scan-status" class="scan-status">Waiting for demo scan...</p></div>
-                <div id="upi-payment-panel" class="payment-panel hidden"><label for="demo-upi-id">Demo UPI ID</label><div class="upi-row"><input id="demo-upi-id" type="text" value="iboxcvr@upi" readonly><button type="button" id="copy-upi-btn">Copy</button></div><p class="payment-hint">Use this displayed ID only for the project demonstration.</p><p id="upi-copy-status" class="scan-status"></p></div>
-                <label class="payment-check"><input type="checkbox" id="demo-payment-check"><span>I confirm that this is a completed <strong>demo payment</strong>.</span></label>
-                <button type="button" id="confirm-payment-btn" class="confirm-payment-btn">✓ Complete Demo Payment</button>
+                <div class="payment-methods" style="display:none"></div>
+                <div id="qr-payment-panel" class="payment-panel" style="display:none"></div>
+                <div id="upi-payment-panel" class="payment-panel hidden" style="display:none"></div>
+                <label class="payment-check" style="display:none"><input type="checkbox" id="demo-payment-check"><span>Demo payment</span></label>
+                <button type="button" id="confirm-payment-btn" class="confirm-payment-btn">💳 Pay securely with Razorpay</button>
                 <p id="payment-message" class="payment-message" role="alert" aria-live="polite"></p>
             </div>
         </div>
@@ -126,5 +127,6 @@
     <footer class="footer"><p>© 2026 <strong>IBOX x CVR's</strong> · Movie Ticket Booking System</p><p>🎬 Enjoy the Movie!</p></footer>
     <script src="script.js" defer></script>
     <script src="cinema-directory.js" defer></script>
+    <script src="real-payment.js" defer></script>
 </body>
 </html>
