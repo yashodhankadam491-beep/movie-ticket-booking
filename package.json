@@ -4,8 +4,8 @@
   "description": "IBOX x CVR's movie booking system with secure authentication, database-driven Maharashtra cinemas and shows, booking history, admin tools and Razorpay payments.",
   "main": "server.js",
   "scripts": {
-    "start": "node --env-file=.env --require ./payment-hook.js --require ./scripts/movie-cron.js server.js",
-    "dev": "node --env-file=.env --require ./payment-hook.js --require ./scripts/movie-cron.js --watch server.js",
+    "start": "node --env-file=.env --require ./catalog-bootstrap.js --require ./payment-hook.js --require ./scripts/movie-cron.js server.js",
+    "dev": "node --env-file=.env --require ./catalog-bootstrap.js --require ./payment-hook.js --require ./scripts/movie-cron.js --watch server.js",
     "backup": "node --env-file=.env scripts/backup-db.js",
     "movies:update": "node --env-file=.env scripts/movie-updater.js",
     "movies:cron": "node --env-file=.env scripts/movie-cron.js"
