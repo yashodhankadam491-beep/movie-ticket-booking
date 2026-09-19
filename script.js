@@ -703,18 +703,27 @@ document.getElementById("book-btn").addEventListener("click", bookTickets);
 document.querySelectorAll(".payment-method").forEach(button => {
     button.addEventListener("click", () => setPaymentMethod(button.dataset.method));
 });
-document.getElementById("fake-scan-btn").addEventListener("click", simulateQrScan);
-document.getElementById("confirm-payment-btn").addEventListener("click", confirmDemoPayment);
-document.getElementById("close-payment").addEventListener("click", closePaymentModal);
-document.getElementById("payment-backdrop").addEventListener("click", closePaymentModal);
-document.getElementById("copy-upi-btn").addEventListener("click", async () => {
+function addOptionalClickListener(id, handler) {
+    const element = document.getElementById(id);
+    if (element) element.addEventListener("click", handler);
+}
+
+addOptionalClickListener("fake-scan-btn", simulateQrScan);
+addOptionalClickListener("confirm-payment-btn", confirmDemoPayment);
+addOptionalClickListener("close-payment", closePaymentModal);
+addOptionalClickListener("payment-backdrop", closePaymentModal);
+addOptionalClickListener("copy-upi-btn", async () => {
     try {
+        if (!demoUpiId) return;
         await navigator.clipboard.writeText(demoUpiId.value);
-        document.getElementById("upi-copy-status").textContent = "✓ Demo UPI ID copied.";
+        const status = document.getElementById("upi-copy-status");
+        if (status) status.textContent = "✓ Demo UPI ID copied.";
     } catch {
+        if (!demoUpiId) return;
         demoUpiId.select();
         document.execCommand("copy");
-        document.getElementById("upi-copy-status").textContent = "✓ Demo UPI ID copied.";
+        const status = document.getElementById("upi-copy-status");
+        if (status) status.textContent = "✓ Demo UPI ID copied.";
     }
 });
 document.getElementById("print-receipt-btn").addEventListener("click", () => window.print());
